@@ -11,47 +11,61 @@ import {
 } from 'react-bootstrap';
 
 import txUtils from '../utils/txUtils';
-let ethereum;
 
 
-async function executeTx (p) {
-  let tx = await txUtils.generateTxParams(ethereum, p)
+let confirmMapping ;
+
+function downloadTokenDetails (dataString) {
+  let win = window.open()
+  win.document.write('<iframe src="' + dataString  + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>')
+  win.document.close()
+}
+
+
+async function executeTx (ethereum, p) {
+  let tx = await txUtils.sendTx(ethereum, p)
   let element
+
   if (tx.error) {
     element = (
       <Alert variant='danger'>
           Error: {tx.error}
       </Alert>
     )
-    ReactDOM.render(element, document.getElementById('alertArea'))  
+  } else {
+    let downloadData = tx.downloadData
+    let downloadDataHref = 'data: ' + 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(downloadData))
+    element = (
+      <Alert variant='success'>
+          Transaction hash: <a href={tx.url + '/tx/' + tx.hash} target="_blank"> {tx.hash} </a>
+          <br />
+          Mapped Address on Matic (click to download data for reference):&nbsp;
+          <code>
+            <a href="#" onClick={ () => { return downloadTokenDetails(downloadDataHref) } } >
+              `{tx.mappedAddress}`
+            </a>
+          </code>
+      </Alert>
+    )
+    confirmMapping = tx.confirmMapping
   }
+  ReactDOM.render(element, document.getElementById('alertArea'))
 
-  element = (
-    <Alert variant='success'>
-        Transaction hash: <a href={tx.url + '/tx/' + tx.hash} target="_blank"> {tx.hash} </a>
-        <br />
-        Mapped Address on Matic: `{tx.mappedAddress}`
-    </Alert>
-  )
-  ReactDOM.render(element, document.getElementById('alertArea'))  
-
-  console.log(tx)
+  if (tx.error) return false
+  else return true
 }
 
 class TokenForm extends Component {
 
-  async componentWillMount() {
-    if (typeof window.ethereum !== 'undefined') {
-      ethereum = window['ethereum']
-    } else {
-      await window.ethereum.enable()
+  constructor(props) {
+    super(props)
+    this.state = {
+      displayConfirmMapping: false,
     }
   }
-
   async handleSubmit (event) {
     event.preventDefault();
-
-    await executeTx({
+    let success = await executeTx(this.props.provider, {
       owner: event.target[0].value,
       rootToken: event.target[1].value,
       name: event.target[2].value,
@@ -59,20 +73,57 @@ class TokenForm extends Component {
       decimals: event.target[4].value,
       isNFT: event.target[5].checked
     })
+    if (success) {
+      this.setState({
+        displayConfirmMapping: true
+      })
+    }
   }
 
-  constructor(props) {
-    super(props)
-    this.state = {
-      accounts: null
-    }
+  async confirmMapping(event) {
+  let element, tx
+
+  if (this.props.provider.selectedAddress.toLowerCase() !== this.props.rootOwner.toLowerCase()) {
+    console.info('selectedAddress', this.props.provider.selectedAddress, ' and root owner', this.props.rootOwner)
+    element = (
+      <Alert variant='danger'>
+        Switch to Root Chain network on metamask, and Root Owner account. 
+      </Alert>
+    )
+    ReactDOM.render(element, document.getElementById('alertArea2'))
+    return;
   } 
+  element = (
+    <Alert variant='info'>
+      Sending tx on root chain. Check console.
+    </Alert>
+  )
+  ReactDOM.render(element, document.getElementById('alertArea2'))
+  tx = await txUtils.mapOnRoot(confirmMapping.data, confirmMapping.contract, this.props.provider)
+
+  if (tx.error) {
+    element = (
+      <Alert variant='danger'>
+          Tx error. Check console.
+      </Alert>
+    )
+  } else {
+    element = (
+      <Alert variant='success'>
+        Confirmation Transaction Hash (on Root Chain): { tx }
+      </Alert>
+    )
+  }
+
+  ReactDOM.render(element, document.getElementById('alertArea2'))
+
+  }
 
   render () {
     return (
       <Container>
         <Form 
-          onSubmit = {this.handleSubmit}
+          onSubmit = { this.handleSubmit.bind(this) }
         >
           <Form.Group>
             <Row>
@@ -167,20 +218,45 @@ class TokenForm extends Component {
           </Form.Group>
 
           <Form.Group>
-            <Button 
-              variant="primary" 
-              type="submit"
-              >
-              Map on Child Chain
-            </Button>
+            <Row>
+              <Col sm={2}>
+                <Button 
+                  variant="primary" 
+                  type="submit"
+                  >
+                  Map on Child 
+                </Button>
+              </Col>
+              <Col>
+                {
+                  this.state.displayConfirmMapping ?
+                  (
+                    <Button 
+                      variant="success"
+                      onClick = { this.confirmMapping.bind(this) }
+                    >
+                      Confirm Mapping
+                    </Button>
+                  )
+                  :
+                  (
+                    <p></p>
+                  )
+                  
+                }
+              </Col>
+            </Row>
           </Form.Group>
-
         </Form>
+
 
         <div id="alertArea">
           
         </div>
 
+        <div id="alertArea2">
+          
+        </div>
 
       </Container>
     );
