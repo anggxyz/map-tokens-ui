@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Jumbotron,
+  Navbar,
   Alert,
   ListGroup
 } from 'react-bootstrap';
@@ -20,9 +20,13 @@ class Header extends Component {
 
   render() {
     return (
-      <Jumbotron>
-        <h1> Map Tokens on Matic Chain </h1>
-        <hr></hr>
+      // <Jumbotron>
+      <div>
+        <Navbar bg="dark" variant="dark">
+          <Navbar.Brand>
+            Map Tokens on Matic Chain
+          </Navbar.Brand>
+        </Navbar>
         <ListGroup>
           <ListGroup.Item>
             Connected to Chain: <code> {this.props.currentNetwork} </code>
@@ -45,9 +49,20 @@ class Header extends Component {
             </Alert>
           )
           :
-          <span />
+            (
+              <Alert variant='info'>
+                1. Make sure you're connected to Owner Account (ref above)
+                <br></br>
+                2. Check console for errors/debugging
+                <br></br>
+                3. Do NOT reload once Mapping process has started
+                <br></br>
+                4. Switch to Owner Account on Ropsten (for testnetv3) and Mainnet (for betav2) to confirm mapping (after successful mapping on child chain) - force reload has been kept off. Please do not reload.
+              </Alert>
+            )
         }
-      </Jumbotron>
+        </div>
+      // </Jumbotron>
     )
   }
 }

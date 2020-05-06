@@ -122,6 +122,8 @@ class TokenForm extends Component {
   render () {
     return (
       <Container>
+        <Row>
+          <Col>
         <Form 
           onSubmit = { this.handleSubmit.bind(this) }
         >
@@ -219,14 +221,12 @@ class TokenForm extends Component {
 
           <Form.Group>
             <Row>
-              <Col sm={2}>
                 <Button 
                   variant="primary" 
                   type="submit"
                   >
                   Map on Child 
                 </Button>
-              </Col>
               <Col>
                 {
                   this.state.displayConfirmMapping ?
@@ -248,8 +248,8 @@ class TokenForm extends Component {
             </Row>
           </Form.Group>
         </Form>
-
-
+        </Col>
+        <Col>
         <div id="alertArea">
           
         </div>
@@ -257,6 +257,8 @@ class TokenForm extends Component {
         <div id="alertArea2">
           
         </div>
+        </Col>
+        </Row>
 
       </Container>
     );
