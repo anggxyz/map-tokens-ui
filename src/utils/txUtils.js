@@ -89,18 +89,7 @@ async function sendTx (ethereum, obj) {
   // for debugging
   let _mappedType = await ChildChainContract.methods.isERC721(obj.rootToken).call()
 
-  let _downloadData = {
-    root: {
-      rpc: network.Main.RPC,
-      token: _mappedRoot,
-      isERC721: obj.isNFT
-    },
-    child: {
-      rpc: network.Matic.RPC,
-      token: _mappedAddress,
-      isERC721: _mappedType
-    }
-  }
+  
 
   let _confirmMappingData = await RegistryContract.methods.mapToken(
     obj.rootToken,
@@ -111,6 +100,20 @@ async function sendTx (ethereum, obj) {
   let _confirmMapping = {
     data: _confirmMappingData,
     contract: RegistryAddress
+  }
+
+  let _downloadData = {
+    root: {
+      rpc: network.Main.RPC,
+      token: _mappedRoot,
+      isERC721: obj.isNFT
+    },
+    child: {
+      rpc: network.Matic.RPC,
+      token: _mappedAddress,
+      isERC721: _mappedType
+    },
+    mappingData: _confirmMappingData
   }
 
   return ({
